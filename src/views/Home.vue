@@ -1,12 +1,12 @@
 <template>
   <div class="home">
     <div class="navigator">
-      <div class="logo">
-        <el-link href="/">
-          <el-image :src="logo"/>
-        </el-link>
-        <div class="divider"></div>
-      </div>
+<!--      <div class="logo">-->
+<!--        <el-link href="/">-->
+<!--          <el-image :src="logo"/>-->
+<!--        </el-link>-->
+<!--        <div class="divider"></div>-->
+<!--      </div>-->
       <ul class="nav-items">
         <li v-for="item in navs" :key="item.path">
           <!--          <el-tooltip effect="light" :content="item.title" placement="right">-->

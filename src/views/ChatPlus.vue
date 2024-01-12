@@ -515,39 +515,6 @@ const connect = function (chat_id, role_id) {
   const _role = getRoleById(role_id);
   // 初始化 WebSocket 对象
   const _sessionId = getSessionId();
-  let host = process.env.VUE_APP_WS_HOST
-  if (host === '') {
-    if (location.protocol === 'https:') {
-      host = 'wss://' + location.host;
-    } else {
-      host = 'ws://' + location.host;
-    }
-  }
-  const _socket = new WebSocket(host + `/api/chat/new?session_id=${_sessionId}&role_id=${role_id}&chat_id=${chat_id}&model_id=${modelID.value}&token=${getUserToken()}`);
-  _socket.addEventListener('open', () => {
-    chatData.value = []; // 初始化聊天数据
-    previousText.value = '';
-    enableInput()
-    activelyClose.value = false;
-
-    if (isNewChat) { // 加载打招呼信息
-      loading.value = false;
-      chatData.value.push({
-        chat_id: chat_id,
-        role_id: role_id,
-        type: "reply",
-        id: randString(32),
-        icon: _role['icon'],
-        content: _role['hello_msg'],
-        orgContent: _role['hello_msg'],
-      })
-      ElMessage.success({message: "对话连接成功！", duration: 1000})
-    } else { // 加载聊天记录
-      loadChatHistory(chat_id);
-    }
-
-  });
-
   _socket.addEventListener('message', event => {
     if (event.data instanceof Blob) {
       const reader = new FileReader();

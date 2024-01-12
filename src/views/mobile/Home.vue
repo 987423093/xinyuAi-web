@@ -4,9 +4,9 @@
       <router-view/>
 
       <van-tabbar route v-model="active" @change="onChange">
-        <van-tabbar-item to="/mobile/chat/list" name="home" icon="chat-o"></van-tabbar-item>
-        <van-tabbar-item to="/mobile/setting" name="setting" icon="setting-o"></van-tabbar-item>
-        <van-tabbar-item to="/mobile/profile" name="profile" icon="user-o"></van-tabbar-item>
+<!--        <van-tabbar-item to="/mobile/chat/list" name="home" icon="chat-o"></van-tabbar-item>-->
+<!--        <van-tabbar-item to="/mobile/setting" name="setting" icon="setting-o"></van-tabbar-item>-->
+<!--        <van-tabbar-item to="/mobile/profile" name="profile" icon="user-o"></van-tabbar-item>-->
       </van-tabbar>
 
     </div>
@@ -23,9 +23,10 @@ import {checkSession} from "@/action/session";
 
 const router = useRouter()
 checkSession().then(() => {
-  if (!isMobile()) {
-    router.replace('/chat')
-  }
+  // if (!isMobile()) {
+  //   router.replace('/chat')
+  // }
+  router.push("/mobile/chat/list")
 }).catch(() => {
   router.push('/login')
 })

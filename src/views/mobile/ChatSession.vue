@@ -1,4 +1,5 @@
 <template>
+  <div class="bg"></div>
   <van-config-provider :theme="getMobileTheme()">
     <div class="mobile-chat" v-loading="loading" element-loading-text="正在连接会话...">
       <van-sticky ref="navBarRef" :offset-top="0" position="top">
@@ -12,18 +13,18 @@
             </van-dropdown-menu>
           </template>
 
-          <template #right>
-            <van-icon name="share-o" @click="showShare = true"/>
-          </template>
+          <!--          <template #right>-->
+          <!--            <van-icon name="share-o" @click="showShare = true"/>-->
+          <!--          </template>-->
         </van-nav-bar>
       </van-sticky>
 
-      <van-share-sheet
-          v-model:show="showShare"
-          title="立即分享给好友"
-          :options="shareOptions"
-          @select="shareChat"
-      />
+      <!--      <van-share-sheet-->
+      <!--          v-model:show="showShare"-->
+      <!--          title="立即分享给好友"-->
+      <!--          :options="shareOptions"-->
+      <!--          @select="shareChat"-->
+      <!--      />-->
 
       <div id="message-list-box" :style="{height: winHeight+'px'}" class="message-list-box">
         <van-list
@@ -70,12 +71,12 @@
               <template #button>
                 <van-button size="small" type="primary" @click="sendMessage">发送</van-button>
               </template>
-              <template #extra>
-                <div class="icon-box">
-                  <van-icon v-if="showStopGenerate" name="stop-circle-o" @click="stopGenerate"/>
-                  <van-icon v-if="showReGenerate" name="play-circle-o" @click="reGenerate"/>
-                </div>
-              </template>
+              <!--              <template #extra>-->
+              <!--                <div class="icon-box">-->
+              <!--                  <van-icon v-if="showStopGenerate" name="stop-circle-o" @click="stopGenerate"/>-->
+              <!--                  <van-icon v-if="showReGenerate" name="play-circle-o" @click="reGenerate"/>-->
+              <!--                </div>-->
+              <!--              </template>-->
             </van-field>
           </van-cell-group>
         </div>
@@ -162,9 +163,6 @@ const onLoad = () => {
         scrollListBox()
       })
     }
-
-    // 连接会话
-    connect(chatId, role.id);
   }).catch(() => {
     error.value = true
   })
@@ -180,134 +178,6 @@ const lineBuffer = ref(''); // 输出缓冲行
 const socket = ref(null);
 const activelyClose = ref(false); // 主动关闭
 const canSend = ref(true);
-const connect = function (chat_id, role_id) {
-  let isNewChat = false;
-  if (!chat_id) {
-    isNewChat = true;
-    chat_id = UUID();
-  }
-  // 先关闭已有连接
-  if (socket.value !== null) {
-    activelyClose.value = true;
-    socket.value.close();
-  }
-
-  // 初始化 WebSocket 对象
-  const _sessionId = getSessionId();
-  let host = process.env.VUE_APP_WS_HOST
-  if (host === '') {
-    if (location.protocol === 'https:') {
-      host = 'wss://' + location.host;
-    } else {
-      host = 'ws://' + location.host;
-    }
-  }
-  const _socket = new WebSocket(host + `/api/chat/new?session_id=${_sessionId}&role_id=${role_id}&chat_id=${chat_id}&model_id=${model}&token=${getUserToken()}`);
-  _socket.addEventListener('open', () => {
-    loading.value = false
-    previousText.value = '';
-    canSend.value = true;
-    activelyClose.value = false;
-
-    if (isNewChat) { // 加载打招呼信息
-      chatData.value.push({
-        type: "reply",
-        id: randString(32),
-        icon: role.icon,
-        content: role.helloMsg,
-        orgContent: role.helloMsg,
-      })
-    }
-  });
-
-  _socket.addEventListener('message', event => {
-    if (event.data instanceof Blob) {
-      const reader = new FileReader();
-      reader.readAsText(event.data, "UTF-8");
-      reader.onload = () => {
-        const data = JSON.parse(String(reader.result));
-        if (data.type === 'start') {
-          chatData.value.push({
-            type: "reply",
-            id: randString(32),
-            icon: role.icon,
-            content: ""
-          });
-        } else if (data.type === "mj") {
-          disableInput(true)
-          const content = data.content;
-          const md = require('markdown-it')({breaks: true});
-          content.html = md.render(content.content)
-          let key = content.key
-          // fixed bug: 执行 Upscale 和 Variation 操作的时候覆盖之前的绘画
-          if (content.status === "Finished") {
-            key = randString(32)
-            enableInput()
-          }
-          // console.log(content)
-          // check if the message is in chatData
-          let flag = false
-          for (let i = 0; i < chatData.value.length; i++) {
-            if (chatData.value[i].id === content.key) {
-              flag = true
-              chatData.value[i].content = content
-              chatData.value[i].id = key
-              break
-            }
-          }
-          if (flag === false) {
-            chatData.value.push({
-              type: "mj",
-              id: key,
-              icon: "/images/avatar/mid_journey.png",
-              content: content
-            });
-          }
-
-        } else if (data.type === 'end') { // 消息接收完毕
-          enableInput()
-          lineBuffer.value = ''; // 清空缓冲
-
-        } else {
-          lineBuffer.value += data.content;
-          const md = require('markdown-it')({breaks: true});
-          const reply = chatData.value[chatData.value.length - 1]
-          reply['orgContent'] = lineBuffer.value;
-          reply['content'] = md.render(lineBuffer.value);
-
-          nextTick(() => {
-            hl.configure({ignoreUnescapedHTML: true})
-            const lines = document.querySelectorAll('.message-line');
-            const blocks = lines[lines.length - 1].querySelectorAll('pre code');
-            blocks.forEach((block) => {
-              hl.highlightElement(block)
-            })
-            scrollListBox()
-          })
-        }
-
-      };
-    }
-
-  });
-
-  _socket.addEventListener('close', () => {
-    if (activelyClose.value) { // 忽略主动关闭
-      return;
-    }
-    // 停止发送消息
-    canSend.value = true;
-    socket.value = null;
-    checkSession().then(() => {
-      connect(chat_id, role_id)
-    }).catch(() => {
-      loading.value = true
-      setTimeout(() => connect(chat_id, role_id), 3000)
-    });
-  });
-
-  socket.value = _socket;
-}
 
 const disableInput = (force) => {
   canSend.value = false;
@@ -350,10 +220,70 @@ const sendMessage = () => {
   })
 
   disableInput(false)
-  socket.value.send(prompt.value);
   previousText.value = prompt.value;
+  // 创建一个EventSource实例来连接到服务器
+  let eventSource = new EventSource(process.env.VUE_APP_API_HOST + "/gpt/streamChatNew?msg=" + prompt.value
+      + "&chat_id=" + chatId
+      + "&model=" + chatConfig.model
+      + "&token=" + getUserToken());
+// 监听消息事件
+  eventSource.onmessage = function (event) {
+    // 处理接收到的数据
+    let data = JSON.parse(event.data);
+    let message = data.msg; // 提取msg字段
+    let msgType = data.type // 提取type字段
+    if (msgType === 'stop') {
+      eventSource.close(); // 关闭EventSource
+      enableInput();
+      return;
+    }
+    const md = require('markdown-it')({breaks: true});
+    let reply;
+
+    if (chatData.value.length > 0 && chatData.value[chatData.value.length - 1].type === "reply") {
+      // 更新最后一个回复条目
+      reply = chatData.value[chatData.value.length - 1];
+      reply.orgContent += message;
+      reply.content = md.render(reply.orgContent);
+    } else {
+      // 创建新的回复条目
+      reply = {
+        type: "reply",
+        id: randString(32),
+        icon: "/images/avatar/gpt.png",
+        orgContent: message,
+        content: md.render(message),
+
+      };
+      chatData.value.push(reply);
+    }
+
+    // 确保UI更新（视你的框架/库而定）
+    nextTick(() => {
+      scrollListBox();
+      enableInput();
+    });
+  };
+
+// 监听错误事件
+  eventSource.onerror = function (error) {
+    console.error("EventSource failed:", error);
+    eventSource.close(); // 关闭EventSource
+    enableInput();
+  };
+
+// 记得在合适的时候关闭EventSource
+// 例如，在组件销毁时
+
+
   prompt.value = '';
+
   return true;
+}
+
+function scrollToBottom() {
+  var contentBox = document.querySelector('.content-box');
+  contentBox.scrollTop = contentBox.scrollHeight;
 }
 
 const stopGenerate = () => {
@@ -390,6 +320,20 @@ const shareChat = () => {
 </script>
 
 <style lang="stylus" scoped>
+.bg {
+  position fixed
+  left 0
+  right 0
+  top 0
+  bottom 0
+  background-color #091519
+  background-image url("~@/assets/img/back5.jpg")
+  background-size cover
+  background-position center
+  background-repeat no-repeat
+  //filter: blur(10px); /* 调整模糊程度，可以根据需要修改值 */
+}
+
 .mobile-chat {
   .message-list-box {
     padding-top 50px

@@ -1,6 +1,8 @@
 <template>
+  <div class="bg"></div>
   <div v-if="isLogin" class="container mobile-chat-list">
     <van-nav-bar
+        v-model:show="showNew"
         :title="title"
         left-text="新建会话"
         @click-left="showPicker = true">
@@ -33,6 +35,7 @@
                   round
               />
               <div class="van-ellipsis">{{ item.title }}</div>
+              <div class="van-ellipsis-msg">{{ truncateText(item.latest_msg, 30)}}</div>
             </div>
           </van-cell>
           <template #right>
@@ -100,6 +103,7 @@ const showBindMobileDialog = ref(false)
 const showEditChat = ref(false)
 const item = ref({})
 const tmpChatTitle = ref("")
+const showNew = ref(false)
 
 checkSession().then((user) => {
   loginUser.value = user
@@ -129,6 +133,7 @@ checkSession().then((user) => {
       for (let i = 0; i < items.length; i++) {
         models.value.push({text: items[i].name, value: items[i].id})
       }
+      showNew.value = true;
     }
   }).catch(e => {
     showFailToast("加载模型失败: " + e.message)
@@ -139,13 +144,16 @@ checkSession().then((user) => {
 })
 
 const onLoad = () => {
-  httpGet("/api/chat/list?user_id=" + loginUser.value.id).then((res) => {
+  httpGet("/api/chat/list").then((res) => {
     if (res.data) {
       chats.value = res.data;
       allChats.value = res.data;
       finished.value = true
     }
     loading.value = false;
+    if (res.data == null || res.data.length == 0) {
+      showPicker.value = true;
+    }
   }).catch(() => {
     error.value = true
     showFailToast("加载会话列表失败")
@@ -191,9 +199,20 @@ const clearAllChatHistory = () => {
   })
 }
 
-const newChat = (item) => {
+const newChat = async (item) => {
   showPicker.value = false
   const options = item.selectedOptions
+  let chatId = 0;
+  try {
+    const res = await httpGet("/api/chat/newChat?model=" + options[1].value);
+    if (res.data) {
+      chatId = res.data.chat_id;
+    }
+  } catch (error) {
+    showFailToast("新建会话失败");
+    console.error(error);
+  }
+  console.log(chatId);
   setChatConfig({
     role: {
       id: options[0].value,
@@ -204,8 +223,9 @@ const newChat = (item) => {
     model: options[1].value,
     modelValue: getModelValue(options[1].value),
     title: '新建会话',
-    chatId: 0
+    chatId: chatId
   })
+
   router.push('/mobile/chat/session')
 }
 
@@ -254,13 +274,29 @@ const removeChat = (item) => {
   }).catch(e => {
     showFailToast('操作失败：' + e.message);
   })
-
 }
 
+function truncateText(text, maxLength) {
+  return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
 </script>
 
 <style lang="stylus" scoped>
 $fontSize = 16px;
+.bg {
+  position fixed
+  left 0
+  right 0
+  top 0
+  bottom 0
+  background-color #091519
+  background-image url("~@/assets/img/back3.jpg")
+  background-size cover
+  background-position center
+  background-repeat no-repeat
+  //filter: blur(10px); /* 调整模糊程度，可以根据需要修改值 */
+}
+
 .mobile-chat-list {
 
   .content {
@@ -278,6 +314,14 @@ $fontSize = 16px;
         .van-ellipsis {
           margin-top 5px;
           margin-left 10px;
+          font-weight: bold;
+        }
+
+        .van-ellipsis-msg {
+          margin-top 5px;
+          margin-left 10px;
+          text-overflow: ellipsis;
+          overflow: hidden;
         }
       }
     }

@@ -3,13 +3,13 @@
     <div class="bg"></div>
     <div class="main">
       <div class="contain">
-        <div class="logo">
-          <el-image src="images/logo.png" fit="cover"/>
-        </div>
+        <!--        <div class="logo">-->
+        <!--          <el-image src="images/login.png" fit="cover"/>-->
+        <!--        </div>-->
         <div class="header">{{ title }}</div>
         <div class="content">
           <div class="block">
-            <el-input placeholder="手机号" size="large" maxlength="11" v-model="username" autocomplete="off">
+            <el-input placeholder="用户名" size="large" maxlength="12" v-model="username" autocomplete="off">
               <template #prefix>
                 <el-icon>
                   <UserFilled/>
@@ -31,10 +31,18 @@
           <el-row class="btn-row">
             <el-button class="login-btn" size="large" type="primary" @click="login">登录</el-button>
           </el-row>
+          <!--          <el-row class="btn-row">-->
+          <!--            <el-button class="login-btn" @click="router.push('/register')" size="large" type="success">注册</el-button>-->
+          <!--          </el-row>-->
+
+          <el-row class="text-line">
+            没有账号？
+            <el-link type="primary" @click="router.push('/register')">注册</el-link>
+          </el-row>
 
           <el-row class="text-line" gutter="20">
-            <el-button type="primary" @click="router.push('/register')" size="small" plain>注册新账号</el-button>
-            <el-button type="success" @click="showResetPass = true" size="small" plain>重置密码</el-button>
+            <!--            <el-button type="primary" @click="router.push('/register')" size="small" plain>注册新账号</el-button>-->
+            <!--            <el-button type="success" @click="showResetPass = true" size="small" plain>重置密码</el-button>-->
           </el-row>
         </div>
       </div>
@@ -64,17 +72,18 @@ import {prevRoute} from "@/router";
 import ResetPass from "@/components/ResetPass.vue";
 
 const router = useRouter();
-const title = ref('ChatPlus 用户登录');
+const title = ref('用户登录');
 const username = ref(process.env.VUE_APP_USER);
 const password = ref(process.env.VUE_APP_PASS);
 const showResetPass = ref(false)
 
 checkSession().then(() => {
-  if (isMobile()) {
-    router.push('/mobile')
-  } else {
-    router.push('/chat')
-  }
+  // if (isMobile()) {
+  //   router.push('/mobile')
+  // } else {
+  //   router.push('/chat')
+  // }
+  router.push('/mobile/chat/list')
 }).catch(() => {
 })
 
@@ -92,25 +101,16 @@ onUnmounted(() => {
 })
 
 const login = function () {
-  if (!validateMobile(username.value)) {
-    return ElMessage.error('请输入合法的手机号');
-  }
+  // if (!validateMobile(username.value)) {
+  //   return ElMessage.error('请输入合法的手机号');
+  // }
   if (password.value.trim() === '') {
     return ElMessage.error('请输入密码');
   }
 
   httpPost('/api/user/login', {username: username.value.trim(), password: password.value.trim()}).then((res) => {
     setUserToken(res.data)
-    if (prevRoute.path === '' || prevRoute.path === '/register') {
-      if (isMobile()) {
-        router.push('/mobile')
-      } else {
-        router.push('/chat')
-      }
-    } else {
-      router.push(prevRoute.path)
-    }
-
+    router.push('/mobile/chat/list');
   }).catch((e) => {
     ElMessage.error('登录失败，' + e.message)
   })
@@ -127,7 +127,7 @@ const login = function () {
   top 0
   bottom 0
   background-color #313237
-  background-image url("~@/assets/img/login-bg.jpg")
+  background-image url("~@/assets/img/back2.jpg")
   background-size cover
   background-position center
   background-repeat repeat-y

@@ -4,7 +4,7 @@ const routes = [
     {
         name: 'home',
         path: '/',
-        redirect: '/chat',
+        redirect: '/login',
         meta: {title: '首页'},
         component: () => import('@/views/Home.vue'),
         children: [
@@ -175,7 +175,8 @@ const routes = [
                 path: '/mobile/chat/list',
                 name: 'mobile-chat-list',
                 component: () => import('@/views/mobile/ChatList.vue'),
-            },
+            }
+            ,
             {
                 path: '/mobile/setting',
                 name: 'mobile-setting',

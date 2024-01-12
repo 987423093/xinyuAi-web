@@ -1,9 +1,9 @@
 <template>
   <div class="container">
     <div class="footer">
-      Powered by {{ author }} @
-      <el-link type="primary" href="https://github.com/yangjian102621/chatgpt-plus" target="_blank">{{ title }}
-      </el-link>
+<!--      Powered by {{ author }} @-->
+<!--      <el-link type="primary" href="https://github.com/yangjian102621/chatgpt-plus" target="_blank">{{ title }}-->
+<!--      </el-link>-->
     </div>
   </div>
 </template>
